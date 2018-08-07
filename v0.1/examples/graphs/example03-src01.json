@@ -1,0 +1,26 @@
+{
+    "nodes" : {
+        "dg_node" : {
+            "singleton" : false,
+            "fields" : {
+                "t1" : {
+                    "type" : "category",
+                    "class" : "words"
+                }
+            },
+            "links" : {
+                "dg_node" : [0, 5]
+            }
+        }
+    },
+    "class" : {
+        "words" : {
+            "dim" : 128
+        }
+    },
+    "ref-constraints" : {
+        "fan-in" : true,
+        "undirected" : true,
+        "cyclic" : true
+    }
+}

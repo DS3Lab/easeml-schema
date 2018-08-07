@@ -1,0 +1,21 @@
+{
+    "nodes" : {
+        "dag_node" : {
+            "singleton" : false,
+            "fields" : {
+                "t1" : {
+                    "type" : "tensor",
+                    "dim" : ["a"]
+                }
+            },
+            "links" : {
+                "dag_node" : [0, "inf"]
+            }
+        }
+    },
+    "ref-constraints" : {
+        "fan-in" : true,
+        "undirected" : false,
+        "cyclic" : false
+    }
+}

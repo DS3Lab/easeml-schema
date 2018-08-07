@@ -1,0 +1,14 @@
+{
+    "nodes" : {
+        "class1" : {
+            "singleton" : true,
+            "type" : "category",
+            "class" : "class1"
+        }
+    },
+    "classes" : {
+        "class1" : {
+            "dim" : 32
+        }
+    }
+}

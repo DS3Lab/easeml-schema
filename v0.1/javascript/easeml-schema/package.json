@@ -1,0 +1,15 @@
+{
+  "name": "easeml-schema",
+  "version": "0.1.0",
+  "description": "Easeml schema used to define the type of a machine learning data set.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Bojan Karlas",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0"
+  }
+}

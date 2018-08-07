@@ -1,0 +1,21 @@
+{
+    "nodes" : {
+        "dg_node" : {
+            "singleton" : false,
+            "fields" : {
+                "t1" : {
+                    "type" : "tensor",
+                    "dim" : [8]
+                }
+            },
+            "links" : {
+                "dg_node" : [1, 10]
+            }
+        }
+    },
+    "ref-constraints" : {
+        "fan-in" : true,
+        "undirected" : false,
+        "cyclic" : true
+    }
+}

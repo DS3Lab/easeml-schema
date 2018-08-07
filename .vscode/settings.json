@@ -1,0 +1,6 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.linting.pep8Enabled": false,
+    "python.linting.enabled": true,
+    "go.gopath": "/home/bojan/projects/phd/model-selection/code/easeml-schema/v0.1/go",
+}

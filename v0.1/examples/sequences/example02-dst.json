@@ -1,0 +1,21 @@
+{
+    "nodes" : {
+        "node" : {
+            "singleton" : false,
+            "fields" : {
+                "w1" : {
+                    "type" : "category",
+                    "class" : "vocabulary_en_us"
+                }
+            },
+            "links" : {
+                "node" : 1
+            }
+        }
+    },
+    "classes" : {
+        "vocabulary_en_us" : {
+            "dim" : "a"
+        }
+    }
+}
