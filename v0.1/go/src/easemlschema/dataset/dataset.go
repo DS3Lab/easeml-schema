@@ -1,11 +1,11 @@
-package dataset
+package dataset // import "easemlschema/dataset"
 
 import (
 	"fmt"
 	"math/rand"
 	"strings"
 
-	sch "easeml-schema/schema"
+	sch "easemlschema/schema"
 )
 
 // File is.

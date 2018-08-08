@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	sch "easeml-schema/schema"
+	sch "easemlschema/schema"
 )
 
 // Here we assume all test will be ran from the v0.1/go directory.

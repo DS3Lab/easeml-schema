@@ -1,4 +1,4 @@
-package schema
+package schema // import "easemlschema/schema"
 
 // Schema is.
 type Schema struct {
