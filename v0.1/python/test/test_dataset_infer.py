@@ -3,8 +3,9 @@ import os
 import sys
 import unittest
 
-import dataset as ds
-import schema as sch
+sys.path.append('../.')
+import easemlschema.dataset as ds
+import easemlschema.schema as sch
 
 
 class TestExamples(unittest.TestCase):

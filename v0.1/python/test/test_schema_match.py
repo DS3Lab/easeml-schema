@@ -3,7 +3,8 @@ import os
 import sys
 import unittest
 
-import schema as sch
+sys.path.append('../.')
+import easemlschema.schema as sch
 
 
 class TestExamples(unittest.TestCase):

@@ -10,7 +10,7 @@ import re
 import string
 import sys
 
-import schema as sch
+import easemlschema.schema as sch
 
 class DatasetException(Exception):
 
