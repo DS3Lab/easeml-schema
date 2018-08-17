@@ -173,22 +173,26 @@ class Schema:
         nodes = {}
 
         # Start by matching constraints as they are the cheapest.
-        if source.cyclic and not self.cyclic:
-            # A cyclic graph cannot be accepted by an acyclic destination.
-            return None if build_matching else False
-        if not source.undirected and self.undirected:
-            # A directed graph cannot be accepted by an undirected destination.
-            return None if build_matching else False
-        if source.fanin and not self.fanin:
-            # A graph that allows fan-in (multiple incoming pointers per node) cannot be accepted by
-            # a destination that forbids it.
-            return None if build_matching else False
+        
         
         # Next we split the nodes into singletons and non-singletons.
         self_singleton_names = [name for name in self.nodes if self.nodes[name].is_singleton == True]
         self_nonsingleton_names = [name for name in self.nodes if self.nodes[name].is_singleton == False]
         source_singleton_names = [name for name in source.nodes if source.nodes[name].is_singleton == True]
         source_nonsingleton_names = [name for name in source.nodes if source.nodes[name].is_singleton == False]
+
+        # We only compare referential constraints if there are non-singleton nodes.
+        if len(self_nonsingleton_names) > 0:
+            if source.cyclic and not self.cyclic:
+                # A cyclic graph cannot be accepted by an acyclic destination.
+                return None if build_matching else False
+            if not source.undirected and self.undirected:
+                # A directed graph cannot be accepted by an undirected destination.
+                return None if build_matching else False
+            if source.fanin and not self.fanin:
+                # A graph that allows fan-in (multiple incoming pointers per node) cannot be accepted by
+                # a destination that forbids it.
+                return None if build_matching else False
 
         # Try all possible singleton node matchings. Individual matchings are not independent
         # because of various name matchings. Maybe this can be optimised.

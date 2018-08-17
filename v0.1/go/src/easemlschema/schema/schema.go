@@ -231,21 +231,6 @@ func (s *Schema) Match(source *Schema, buildMatching bool) (bool, *Schema) {
 	nodes := map[string]*Node{}
 	match := false
 
-	// Start by matching constraints as they are the cheapest.
-	if source.IsCyclic && !s.IsCyclic {
-		// A cyclic graph cannot be accepted by an acyclic destination.
-		return false, nil
-	}
-	if !source.IsUndirected && s.IsUndirected {
-		// A directed graph cannot be accepted by an undirected destination.
-		return false, nil
-	}
-	if source.IsFanIn && !s.IsFanIn {
-		// A graph that allows fan-in (multiple incoming pointers per node) cannot be accepted by
-		// a destination that forbids it.
-		return false, nil
-	}
-
 	// Next we split the nodes into singletons and non-singletons.
 	selfSingletonNames := []string{}
 	sourceSingletonNames := []string{}
@@ -271,6 +256,23 @@ func (s *Schema) Match(source *Schema, buildMatching bool) (bool, *Schema) {
 	// Simply dismiss in case the counts don't match.
 	if len(selfSingletonNames) != len(sourceSingletonNames) || len(selfNonSingletonNames) != len(sourceNonSingletonNames) || len(s.Classes) != len(source.Classes) {
 		return false, nil
+	}
+
+	// We only compare referential constraints if there are non-singleton nodes.
+	if len(selfNonSingletonNames) > 0 {
+		if source.IsCyclic && !s.IsCyclic {
+			// A cyclic graph cannot be accepted by an acyclic destination.
+			return false, nil
+		}
+		if !source.IsUndirected && s.IsUndirected {
+			// A directed graph cannot be accepted by an undirected destination.
+			return false, nil
+		}
+		if source.IsFanIn && !s.IsFanIn {
+			// A graph that allows fan-in (multiple incoming pointers per node) cannot be accepted by
+			// a destination that forbids it.
+			return false, nil
+		}
 	}
 
 	// Try all possible singleton node matchings. Individual field matchings are not independent

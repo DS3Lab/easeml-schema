@@ -226,34 +226,7 @@ Schema.prototype.match = function(source, buildMatching=false) {
     let classNameMap = {};
     let nodeNameMap = {};
     let nodes = {};
-
-    // Start by matching constraints as they are the cheapest.
-    if (source.cyclic && this.cyclic === false) {
-        // A cyclic graph cannot be accepted by an acyclic destination.
-        if (buildMatching) {
-            return null;
-        } else {
-            return false;
-        }
-    }
-    if (source.undirected === false && this.undirected) {
-        // A directed graph cannot be accepted by an undirected destination.
-        if (buildMatching) {
-            return null;
-        } else {
-            return false;
-        }
-    }
-    if (source.fanin && this.fanin === false) {
-        // A graph that allows fan-in (multiple incoming pointers per node) cannot be accepted by
-        // a destination that forbids it.
-        if (buildMatching) {
-            return null;
-        } else {
-            return false;
-        }
-    }
-
+    
     // Next we split the nodes into singletons and non-singletons.
     let selfSingletonNames = [];
     let selfNonsingletonNames = [];
@@ -271,6 +244,35 @@ Schema.prototype.match = function(source, buildMatching=false) {
             sourceSingletonNames.push(k);
         } else {
             sourceNonsingletonNames.push(k);
+        }
+    }
+
+    // We only compare referential constraints if there are non-singleton nodes.
+    if (selfNonsingletonNames.length > 0) {
+        if (source.cyclic && this.cyclic === false) {
+            // A cyclic graph cannot be accepted by an acyclic destination.
+            if (buildMatching) {
+                return null;
+            } else {
+                return false;
+            }
+        }
+        if (source.undirected === false && this.undirected) {
+            // A directed graph cannot be accepted by an undirected destination.
+            if (buildMatching) {
+                return null;
+            } else {
+                return false;
+            }
+        }
+        if (source.fanin && this.fanin === false) {
+            // A graph that allows fan-in (multiple incoming pointers per node) cannot be accepted by
+            // a destination that forbids it.
+            if (buildMatching) {
+                return null;
+            } else {
+                return false;
+            }
         }
     }
 
