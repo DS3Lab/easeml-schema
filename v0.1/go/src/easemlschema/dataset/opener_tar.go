@@ -110,10 +110,8 @@ func getTarDir(root TarDir, dirpath string, readOnly bool) (TarDir, error) {
 	}
 	if readOnly {
 		return nil, errors.New("directory not found: " + dirpath)
-	} else {
-		return nil, errors.New("name conflict: " + dirpath)
 	}
-
+	return nil, errors.New("name conflict: " + dirpath)
 }
 
 // DumpTarOpener converts a tar opener to a bytes reader.

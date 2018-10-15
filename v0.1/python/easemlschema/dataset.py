@@ -287,11 +287,12 @@ class Dataset(Directory):
             # If a links file is missing, we might have implicit links.
             if len(sample_children["links"]) == 0:
                 
-                # If we have non-signleton nodes, then we assume a single chain.
+                # If we have non-signleton nodes, then we assume a single directed chain.
                 # To construct a graph without links, there must be an empty links file.
                 for node_name, node in sch_nodes.items():
                     if node.is_singleton == False:
                         node.links[node_name] = sch.Link(1)
+                        sch_undirected = False
             
             else:
 

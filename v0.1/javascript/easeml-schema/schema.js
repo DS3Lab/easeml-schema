@@ -184,14 +184,14 @@ Schema.prototype.dump = function() {
     };
 
     let nodes = {};
-    for (k in this.nodes) {
+    for (let k in this.nodes) {
         nodes[k] = dumpNode(this.nodes[k]);
     }
     result["nodes"] = nodes;
 
     if (Object.keys(this.categoryClasses).length > 0) {
         let categoryClasses = {};
-        for (k in this.categoryClasses) {
+        for (let k in this.categoryClasses) {
             categoryClasses[k] = dumpClass(this.categoryClasses[k]);
         }
         result["classes"] = categoryClasses;
@@ -529,13 +529,13 @@ function dumpNode(self) {
     } else {
 
         let fields = {};
-        for (k in self.fields) {
+        for (let k in self.fields) {
             fields[k] = dumpField(self.fields[k]);
         }
         result["fields"] = fields;
 
         let links = {};
-        for (k in self.links) {
+        for (let k in self.links) {
             links[k] = dumpLink(self.links[k]);
         }
         result["links"] = links;

@@ -416,11 +416,12 @@ func (d *Dataset) InferSchema() (*sch.Schema, Error) {
 		// If a links file is missing, we might have implicit links.
 		if len(sampleLinks) == 0 {
 
-			// If we have non-signleton nodes, then we assume a single chain.
+			// If we have non-signleton nodes, then we assume a single undirected chain.
 			// To construct a graph without links, there must be an empty links file.
 			for nodeName, node := range schNodes {
 				if node.IsSingleton == false {
 					node.Links[nodeName] = &sch.Link{LBound: 1, UBound: 1}
+					schUndirected = false
 				}
 			}
 
@@ -536,7 +537,8 @@ func isSuperset(set1, set2 map[string]interface{}) bool {
 
 const defaultRandomStringChars = "abcdefghijklmnopqrstuvwxyz0123456789"
 
-func randomString(size int, chars string) string {
+// RandomString returns a random string of given length from a given set of characters.
+func RandomString(size int, chars string) string {
 	if chars == "" {
 		chars = defaultRandomStringChars
 	}
@@ -561,7 +563,7 @@ func randomVector(dimensions []int) []float64 {
 }
 
 // GenerateFromSchema is.
-func GenerateFromSchema(root string, schema *sch.Schema, numSamples int, numNodeInstances int) (*Dataset, error) {
+func GenerateFromSchema(root string, schema *sch.Schema, sampleNames []string, numNodeInstances int) (*Dataset, error) {
 
 	// Generate classes.
 	classes := map[string]*Class{}
@@ -569,15 +571,14 @@ func GenerateFromSchema(root string, schema *sch.Schema, numSamples int, numNode
 		dim := class.Dim.(*sch.ConstDim).Value
 		categories := make([]string, dim)
 		for i := 0; i < dim; i++ {
-			categories[i] = randomString(16, defaultRandomStringChars)
+			categories[i] = RandomString(16, defaultRandomStringChars)
 		}
 		classes[className] = &Class{Categories: categories}
 	}
 
 	// Generate samples.
 	datasetRootChildren := map[string]File{}
-	for i := 0; i < numSamples; i++ {
-		sampleName := randomString(16, defaultRandomStringChars)
+	for _, sampleName := range sampleNames {
 		nodes := map[string]File{}
 
 		// Generate nodes.
