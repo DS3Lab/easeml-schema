@@ -45,11 +45,12 @@ def random_string(size, chars=string.ascii_lowercase+string.digits):
 
 class File:
 
-    def __init__(self, name, file_type):
+    def __init__(self, name, file_type, subtype="default"):
         assert(isinstance(name, str))
         assert(file_type in FILE_TYPES)
         self.name = name
         self.file_type = file_type
+        self.subtype = "default"
 
 
 class Directory(File):
@@ -62,7 +63,7 @@ class Directory(File):
     
 
     @staticmethod
-    def _load(root, rel_path, name, opener, metadata_only=False):
+    def _load(root, rel_path, name, opener, metadata_only=False, subtype="default"):
         path = os.path.join(rel_path, name) if len(name) > 0 else rel_path
         children = Directory._load_children(root, path, opener, metadata_only)
         return Directory(name, children)
@@ -78,14 +79,15 @@ class Directory(File):
         for n in dirlist:
             child = None
 
-            for file_type, ext in TYPE_EXTENSIONS.items():
-                if n.endswith(ext):
-                    n = n[:-len(ext)]
-                    child = FILE_TYPES[file_type]._load(root, path, n, opener, metadata_only)
-                    break
+            for file_type, ext_dict in TYPE_EXTENSIONS.items():
+                for subtype, ext in ext_dict.items():
+                    if n.endswith(ext):
+                        n = n[:-len(ext)]
+                        child = FILE_TYPES[file_type]._load(root, path, n, opener, metadata_only, subtype)
+                        break
 
             if child is None:
-                child = Directory._load(root, path, n, opener, metadata_only)
+                child = Directory._load(root, path, n, opener, metadata_only, "default")
             
             children[n] = child
         
@@ -101,6 +103,33 @@ class Directory(File):
     def _dump_children(self, root, path, opener):
         for child_name, child in self.children.items():
             child._dump(root, path, child_name, opener)
+    
+
+    def get_child_by_type(self, file_type):
+        for child in self.children.values():
+            if child.file_type == file_type:
+                return child
+            if child.file_type == "directory":
+                result = child.get_child_by_type(file_type)
+                if result is not None:
+                    return result
+        return None
+
+
+    def get_file_subtype(self, file_type):
+        child = self.get_child_by_type(file_type)
+        if child is not None:
+            return child.subtype
+        else:
+            return None
+            
+    
+    def set_file_subtype(self, file_type, subtype):
+        for child in self.children.values():
+            if child.file_type == file_type:
+                child.subtype = subtype
+            if child.file_type == "directory":
+                child.set_file_subtype(file_type, subtype)
 
 
 class Dataset(Directory):
@@ -500,33 +529,40 @@ class Dataset(Directory):
 
 class Tensor(File):
 
-    def __init__(self, name, dimensions, data=None):
-        super(Tensor, self).__init__(name, "tensor")
+    def __init__(self, name, dimensions, data=None, subtype="default"):
+        assert(subtype in ["default", "csv"])
+        super(Tensor, self).__init__(name, "tensor", subtype)
         assert(isinstance(dimensions, list) or isinstance(dimensions, tuple))
         self.dimensions = list(dimensions)
         self.data = data
     
 
     @staticmethod
-    def _load(root, rel_path, name, opener, metadata_only=False):
+    def _load(root, rel_path, name, opener, metadata_only=False, subtype="default"):
         path = os.path.join(rel_path, name)
-        with opener(root, path + TYPE_EXTENSIONS["tensor"], "tensor", read_only=True, binary=True) as f:
+        with opener(root, path + TYPE_EXTENSIONS["tensor"][subtype], "tensor", read_only=True, binary=True) as f:
             
-            if metadata_only:
-                major, minor = np.lib.format.read_magic(f)
-                read_header = getattr(np.lib.format, "read_array_header_%d_%d" % (major, minor))
-                shape, _, dtype = read_header(f)
-                data = None
-            
-            else:
-                data = np.load(f)
+            if subtype == "default":
+                if metadata_only:
+                    major, minor = np.lib.format.read_magic(f)
+                    read_header = getattr(np.lib.format, "read_array_header_%d_%d" % (major, minor))
+                    shape, _, dtype = read_header(f)
+                    data = None
+                
+                else:
+                    data = np.load(f)
+                    shape = data.shape
+                    dtype = data.dtype
+
+            elif subtype == "csv":
+                data = np.loadtxt(f, delimiter=",")
                 shape = data.shape
                 dtype = data.dtype
         
         if dtype != np.dtype("float_"):
             raise DatasetException("Tensor datatype must be float64.", path)
 
-        return Tensor(name, shape, data)
+        return Tensor(name, shape, data, subtype)
 
     
     def _dump(self, root, rel_path, name, opener):
@@ -535,8 +571,11 @@ class Tensor(File):
         if self.data is None:
             raise DatasetException("Cannot write tensor without data.", path)
         
-        with opener(root, path + TYPE_EXTENSIONS["tensor"], "tensor", read_only=False, binary=True) as f:
-            np.save(f, self.data, allow_pickle=False)
+        with opener(root, path + TYPE_EXTENSIONS["tensor"][self.subtype], "tensor", read_only=False, binary=True) as f:
+            if self.subtype == "default":
+                np.save(f, self.data, allow_pickle=False)
+            elif self.subtype == "csv":
+                np.savetxt(f, self.data, delimiter=",")
 
 
 class Category(File):
@@ -548,9 +587,9 @@ class Category(File):
     
 
     @staticmethod
-    def _load(root, rel_path, name, opener, metadata_only=False):
+    def _load(root, rel_path, name, opener, metadata_only=False, subtype="default"):
         path = os.path.join(rel_path, name)
-        with opener(root, path + TYPE_EXTENSIONS["category"], "category", read_only=True, binary=False) as f:
+        with opener(root, path + TYPE_EXTENSIONS["category"][subtype], "category", read_only=True, binary=False) as f:
             lines = [x.strip() for x in f.readlines()]
 
         return Category(name, lines)
@@ -558,7 +597,7 @@ class Category(File):
     
     def _dump(self, root, rel_path, name, opener):
         path = os.path.join(rel_path, name)
-        with opener(root, path + TYPE_EXTENSIONS["category"], "category", read_only=False, binary=False) as f:
+        with opener(root, path + TYPE_EXTENSIONS["category"][self.subtype], "category", read_only=False, binary=False) as f:
             lines = [x + "\n" for x in self.categories]
             f.writelines(lines)
     
@@ -586,9 +625,9 @@ class Links(File):
     
 
     @staticmethod
-    def _load(root, rel_path, name, opener, metadata_only=False):
+    def _load(root, rel_path, name, opener, metadata_only=False, subtype="default"):
         path = os.path.join(rel_path, name)
-        with opener(root, path + TYPE_EXTENSIONS["links"], "links", read_only=True, binary=False) as f:
+        with opener(root, path + TYPE_EXTENSIONS["links"][subtype], "links", read_only=True, binary=False) as f:
             lines = [x.strip() for x in f.readlines()]
 
         try:
@@ -602,7 +641,7 @@ class Links(File):
     
     def _dump(self, root, rel_path, name, opener):
         path = os.path.join(rel_path, name)
-        with opener(root, path + TYPE_EXTENSIONS["links"], "links", read_only=False, binary=False) as f:
+        with opener(root, path + TYPE_EXTENSIONS["links"][self.subtype], "links", read_only=False, binary=False) as f:
             lines = [x.dump() + "\n" for x in self.links]
             f.writelines(lines)
     
@@ -818,9 +857,9 @@ class Class(File):
     
 
     @staticmethod
-    def _load(root, rel_path, name, opener, metadata_only=False):
+    def _load(root, rel_path, name, opener, metadata_only=False, subtype="default"):
         path = os.path.join(rel_path, name)
-        with opener(root, path + TYPE_EXTENSIONS["class"], "class", read_only=True, binary=False) as f:
+        with opener(root, path + TYPE_EXTENSIONS["class"][subtype], "class", read_only=True, binary=False) as f:
             lines = [x.strip() for x in f.readlines()]
         
         # Get rid of empty lines.
@@ -837,7 +876,7 @@ class Class(File):
     
     def _dump(self, root, rel_path, name, opener):
         path = os.path.join(rel_path, name)
-        with opener(root, path + TYPE_EXTENSIONS["class"], "class", read_only=False, binary=False) as f:
+        with opener(root, path + TYPE_EXTENSIONS["class"][self.subtype], "class", read_only=False, binary=False) as f:
             lines = [x + "\n" for x in self.categories]
             f.writelines(lines)
 
@@ -852,10 +891,10 @@ FILE_TYPES = {
 
 
 TYPE_EXTENSIONS = {
-    "tensor" : ".ten.npy",
-    "category" : ".cat.txt",
-    "class" : ".class.txt",
-    "links" : ".links.csv"
+    "tensor" : { "default" : ".ten.npy", "csv" : ".ten.csv"},
+    "category" : { "default" : ".cat.txt"},
+    "class" : { "default" : ".class.txt"},
+    "links" : { "default" : ".links.csv" }
 }
 
 
