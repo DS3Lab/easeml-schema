@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='EasemlSchema',
-    version='0.1.1',
+    version='0.1.2',
     description='Schema which is used to define the type of a machine learning data set.',
     #long_description=readme,
     author='Bojan Karlas',
